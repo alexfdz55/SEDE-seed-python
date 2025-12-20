@@ -71,6 +71,20 @@ if "Grados" in excel_file.sheet_names:
     if col_nombre_grado in df_grados.columns:
         contexto['grados'] = df_grados[df_grados[col_nombre_grado].notna()][col_nombre_grado].unique().tolist()
 
+# Leer las áreas para validaciones de referencia
+if "Áreas" in excel_file.sheet_names:
+    df_areas = pd.read_excel(archivo_excel, sheet_name="Áreas", header=1)
+    col_nombre_area = COLUMNAS_REQUERIDAS["Áreas"][0]  # Nombre del área
+    if col_nombre_area in df_areas.columns:
+        contexto['areas'] = df_areas[df_areas[col_nombre_area].notna()][col_nombre_area].unique().tolist()
+
+# Leer las asignaturas para validaciones de referencia
+if "Asignaturas" in excel_file.sheet_names:
+    df_asignaturas = pd.read_excel(archivo_excel, sheet_name="Asignaturas", header=1)
+    col_nombre_asignatura = COLUMNAS_REQUERIDAS["Asignaturas"][0]  # Nombre de la asignatura
+    if col_nombre_asignatura in df_asignaturas.columns:
+        contexto['asignaturas'] = df_asignaturas[df_asignaturas[col_nombre_asignatura].notna()][col_nombre_asignatura].unique().tolist()
+
 for nombre_hoja in excel_file.sheet_names:
     # Saltar la hoja de Instrucciones
     if nombre_hoja == "Instrucciones":

@@ -15,6 +15,10 @@ def validar_areas(df, nombre_hoja):
     errores = []
     advertencias = []
     
+    # Obtener nombres de columnas desde la configuración
+    columnas = COLUMNAS_REQUERIDAS[nombre_hoja]
+    col_nombre = columnas[0]  # Nombre del área
+    
     # Validar que no esté vacía
     if df.empty:
         errores.append("La hoja está vacía")
@@ -29,10 +33,11 @@ def validar_areas(df, nombre_hoja):
         errores.append("Debe haber al menos un área registrada")
     
     # Validar que los nombres de área no estén duplicados
-    if 'Nombre del área' in df.columns:
-        duplicados = df[df['Nombre del área'].duplicated(keep=False)]
+    if col_nombre in df.columns:
+        duplicados = df[df[col_nombre].duplicated(keep=False) & df[col_nombre].notna()]
         if len(duplicados) > 0:
-            errores.append(f"Hay {len(duplicados)} nombre(s) de área duplicado(s)")
+            nombres_dup = duplicados[col_nombre].unique()
+            errores.append(f"Hay {len(duplicados)} nombre(s) de área duplicado(s): {', '.join(nombres_dup)}")
     
     return {
         'valido': len(errores) == 0,
