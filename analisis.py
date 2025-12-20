@@ -47,6 +47,16 @@ print("=" * 40)
 total_errores = 0
 total_advertencias = 0
 
+# Construir contexto con datos de referencia para validaciones cruzadas
+contexto = {}
+
+# Leer las sedes para validaciones de referencia
+if "Sedes" in excel_file.sheet_names:
+    df_sedes = pd.read_excel(archivo_excel, sheet_name="Sedes", header=1)
+    col_nombre_sede = COLUMNAS_REQUERIDAS["Sedes"][0]  # Nombre de la institución
+    if col_nombre_sede in df_sedes.columns:
+        contexto['sedes'] = df_sedes[df_sedes[col_nombre_sede].notna()][col_nombre_sede].unique().tolist()
+
 for nombre_hoja in excel_file.sheet_names:
     # Saltar la hoja de Instrucciones
     if nombre_hoja == "Instrucciones":
@@ -83,7 +93,13 @@ for nombre_hoja in excel_file.sheet_names:
     # Validar contenido usando el validador específico
     if nombre_hoja in VALIDADORES:
         validador = VALIDADORES[nombre_hoja]
-        resultado = validador(df, nombre_hoja)
+        
+        # Pasar contexto al validador
+        try:
+            resultado = validador(df, nombre_hoja, contexto=contexto)
+        except TypeError:
+            # Si el validador no acepta contexto, llamarlo sin él
+            resultado = validador(df, nombre_hoja)
         
         if resultado['valido']:
             print(f"  ✓ Contenido válido ({len(df)} fila(s))")
