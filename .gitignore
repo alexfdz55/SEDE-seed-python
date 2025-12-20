@@ -1,0 +1,29 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+
+# Archivos Excel
+*.xlsx
+*.xls
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
