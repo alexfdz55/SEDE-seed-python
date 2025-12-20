@@ -1,6 +1,7 @@
 import pandas as pd
 import warnings
 from config import HOJAS_REQUERIDAS, COLUMNAS_REQUERIDAS
+from validadores import VALIDADORES
 
 # Suprimir warnings de openpyxl sobre validación de datos
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
@@ -38,17 +39,20 @@ else:
         for hoja in hojas_extra:
             print(f"  - {hoja}")
 
-# Leer las columnas de todas las hojas (excepto la primera "Instrucciones")
+# Validación de columnas y contenido
 print("\n" + "=" * 40)
-print("Validación de columnas:")
+print("Validación de columnas y contenido:")
 print("=" * 40)
+
+total_errores = 0
+total_advertencias = 0
 
 for nombre_hoja in excel_file.sheet_names:
     # Saltar la hoja de Instrucciones
     if nombre_hoja == "Instrucciones":
         continue
     
-    # Leer la hoja - intentar con header en la segunda fila (índice 1)
+    # Leer la hoja - con header en la segunda fila (índice 1)
     df = pd.read_excel(archivo_excel, sheet_name=nombre_hoja, header=1)
     
     columnas_actuales = list(df.columns)
@@ -59,15 +63,51 @@ for nombre_hoja in excel_file.sheet_names:
     columnas_extra = [col for col in columnas_actuales if col not in columnas_esperadas]
     
     print(f"\n{nombre_hoja}:")
+    
+    # Validar estructura de columnas
     if not columnas_faltantes and not columnas_extra:
-        print(f"  ✓ Todas las columnas son correctas ({len(columnas_actuales)})")
+        print(f"  ✓ Estructura correcta ({len(columnas_actuales)} columnas)")
     else:
         if columnas_faltantes:
             print(f"  ✗ Faltan {len(columnas_faltantes)} columna(s):")
             for col in columnas_faltantes:
                 print(f"    - {col}")
+            total_errores += len(columnas_faltantes)
         
         if columnas_extra:
             print(f"  ⚠ Hay {len(columnas_extra)} columna(s) adicional(es):")
             for col in columnas_extra:
                 print(f"    - {col}")
+            total_advertencias += len(columnas_extra)
+    
+    # Validar contenido usando el validador específico
+    if nombre_hoja in VALIDADORES:
+        validador = VALIDADORES[nombre_hoja]
+        resultado = validador(df, nombre_hoja)
+        
+        if resultado['valido']:
+            print(f"  ✓ Contenido válido ({len(df)} fila(s))")
+        else:
+            print(f"  ✗ Problemas en el contenido:")
+            
+        if resultado['errores']:
+            for error in resultado['errores']:
+                print(f"    ✗ {error}")
+                total_errores += 1
+        
+        if resultado['advertencias']:
+            for advertencia in resultado['advertencias']:
+                print(f"    ⚠ {advertencia}")
+                total_advertencias += 1
+
+# Resumen final
+print("\n" + "=" * 40)
+print("RESUMEN DE VALIDACIÓN:")
+print("=" * 40)
+print(f"Total de errores: {total_errores}")
+print(f"Total de advertencias: {total_advertencias}")
+
+if total_errores == 0:
+    print("\n✓ El archivo Excel es VÁLIDO")
+else:
+    print(f"\n✗ El archivo Excel tiene {total_errores} error(es) que deben corregirse")
