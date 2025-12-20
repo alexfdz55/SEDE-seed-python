@@ -64,6 +64,13 @@ if "Cursos académicos" in excel_file.sheet_names:
     if col_nombre_curso in df_cursos.columns:
         contexto['cursos_academicos'] = df_cursos[df_cursos[col_nombre_curso].notna()][col_nombre_curso].unique().tolist()
 
+# Leer los grados para validaciones de referencia
+if "Grados" in excel_file.sheet_names:
+    df_grados = pd.read_excel(archivo_excel, sheet_name="Grados", header=1)
+    col_nombre_grado = COLUMNAS_REQUERIDAS["Grados"][1]  # Nombre del grado
+    if col_nombre_grado in df_grados.columns:
+        contexto['grados'] = df_grados[df_grados[col_nombre_grado].notna()][col_nombre_grado].unique().tolist()
+
 for nombre_hoja in excel_file.sheet_names:
     # Saltar la hoja de Instrucciones
     if nombre_hoja == "Instrucciones":
