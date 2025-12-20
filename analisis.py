@@ -69,7 +69,8 @@ if "Grados" in excel_file.sheet_names:
     df_grados = pd.read_excel(archivo_excel, sheet_name="Grados", header=1)
     col_nombre_grado = COLUMNAS_REQUERIDAS["Grados"][1]  # Nombre del grado
     if col_nombre_grado in df_grados.columns:
-        contexto['grados'] = df_grados[df_grados[col_nombre_grado].notna()][col_nombre_grado].unique().tolist()
+        # Convertir a string para evitar problemas de tipo
+        contexto['grados'] = [str(g) for g in df_grados[df_grados[col_nombre_grado].notna()][col_nombre_grado].unique().tolist()]
 
 # Leer las áreas para validaciones de referencia
 if "Áreas" in excel_file.sheet_names:
