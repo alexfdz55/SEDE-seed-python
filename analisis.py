@@ -86,6 +86,13 @@ if "Asignaturas" in excel_file.sheet_names:
     if col_nombre_asignatura in df_asignaturas.columns:
         contexto['asignaturas'] = df_asignaturas[df_asignaturas[col_nombre_asignatura].notna()][col_nombre_asignatura].unique().tolist()
 
+# Leer los profesores para validaciones de referencia
+if "Profesores" in excel_file.sheet_names:
+    df_profesores = pd.read_excel(archivo_excel, sheet_name="Profesores", header=1)
+    col_num_doc_profesor = COLUMNAS_REQUERIDAS["Profesores"][3]  # Número de documento
+    if col_num_doc_profesor in df_profesores.columns:
+        contexto['profesores_docs'] = [str(d) for d in df_profesores[df_profesores[col_num_doc_profesor].notna()][col_num_doc_profesor].unique().tolist()]
+
 for nombre_hoja in excel_file.sheet_names:
     # Saltar la hoja de Instrucciones
     if nombre_hoja == "Instrucciones":
