@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from io import BytesIO
 import warnings
 from config import HOJAS_REQUERIDAS, COLUMNAS_REQUERIDAS
-from validadores import VALIDADORES
+from validador_core import construir_contexto, validar_hoja
 
 # Configuración de página
 st.set_page_config(
@@ -75,30 +75,7 @@ def validar_excel(archivo_excel):
         
         # Primera pasada: construir contexto
         status_text.text("🔄 Construyendo contexto de referencia...")
-        
-        if "Sedes" in excel_file.sheet_names:
-            df_sedes = pd.read_excel(excel_file, sheet_name="Sedes", header=1)
-            contexto['sedes'] = df_sedes["Nombre de la institución"].unique().tolist()
-        
-        if "Cursos académicos" in excel_file.sheet_names:
-            df_cursos = pd.read_excel(excel_file, sheet_name="Cursos académicos", header=1)
-            contexto['cursos_academicos'] = df_cursos["Nombre del año escolar"].unique().tolist()
-        
-        if "Grados" in excel_file.sheet_names:
-            df_grados = pd.read_excel(excel_file, sheet_name="Grados", header=1)
-            contexto['grados'] = [str(g) for g in df_grados["Nombre del grado"].unique().tolist()]
-        
-        if "Áreas" in excel_file.sheet_names:
-            df_areas = pd.read_excel(excel_file, sheet_name="Áreas", header=1)
-            contexto['areas'] = df_areas["Nombre del área"].unique().tolist()
-        
-        if "Asignaturas" in excel_file.sheet_names:
-            df_asignaturas = pd.read_excel(excel_file, sheet_name="Asignaturas", header=1)
-            contexto['asignaturas'] = df_asignaturas["Nombre de la asignatura"].unique().tolist()
-        
-        if "Profesores" in excel_file.sheet_names:
-            df_profesores = pd.read_excel(excel_file, sheet_name="Profesores", header=1)
-            contexto['profesores_docs'] = [str(doc) for doc in df_profesores["Número de documento"].unique().tolist()]
+        contexto = construir_contexto(excel_file, archivo_excel)
         
         # Segunda pasada: validar hojas
         for hoja in HOJAS_REQUERIDAS:
@@ -142,18 +119,10 @@ def validar_excel(archivo_excel):
                     resultado_hoja['errores'].append("Estructura de columnas incorrecta")
             
             # Validar contenido
-            if hoja in VALIDADORES:
-                try:
-                    validacion = VALIDADORES[hoja](df, hoja, contexto)
-                    resultado_hoja['contenido_valido'] = validacion['valido']
-                    resultado_hoja['errores'].extend(validacion['errores'])
-                    resultado_hoja['advertencias'].extend(validacion['advertencias'])
-                except TypeError:
-                    # Validador antiguo sin contexto
-                    validacion = VALIDADORES[hoja](df, hoja)
-                    resultado_hoja['contenido_valido'] = validacion['valido']
-                    resultado_hoja['errores'].extend(validacion['errores'])
-                    resultado_hoja['advertencias'].extend(validacion['advertencias'])
+            validacion = validar_hoja(hoja, df, contexto)
+            resultado_hoja['contenido_valido'] = validacion['valido']
+            resultado_hoja['errores'].extend(validacion['errores'])
+            resultado_hoja['advertencias'].extend(validacion['advertencias'])
             
             # Agregar a resultados
             resultados['detalles'][hoja] = resultado_hoja
