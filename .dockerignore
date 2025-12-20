@@ -1,0 +1,47 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+
+# Archivos Excel (no subirlos al contenedor)
+*.xlsx
+*.xls
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Reportes generados
+reportes/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Jupyter
+*.ipynb_checkpoints
+analisis_excel.ipynb
+
+# Documentación local
+README.md
+
+# Archivos temporales
+*.log
+*.tmp
