@@ -8,6 +8,9 @@ ENV/
 *.xlsx
 *.xls
 
+# Reportes generados
+reportes/
+
 # Python
 __pycache__/
 *.py[cod]
