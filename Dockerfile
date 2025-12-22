@@ -20,8 +20,7 @@ COPY . .
 EXPOSE 8501
 
 # Configurar Streamlit para producción
-ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
-# Comando para ejecutar la aplicación
-CMD ["streamlit", "run", "app_streamlit.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+# Comando para ejecutar la aplicación usando script de inicio
+CMD ["python", "start.py"]
