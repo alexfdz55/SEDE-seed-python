@@ -4,21 +4,28 @@ Script de inicio para Railway que maneja correctamente las variables de entorno.
 """
 import os
 import sys
-import subprocess
 
 # Obtener el puerto de Railway (si existe) o usar 8501 por defecto
 port = os.environ.get('PORT', '8501')
 
-# IMPORTANTE: Eliminar STREAMLIT_SERVER_PORT si Railway la inyectó incorrectamente
-if 'STREAMLIT_SERVER_PORT' in os.environ:
-    del os.environ['STREAMLIT_SERVER_PORT']
+# CRÍTICO: Forzar eliminación de variables problemáticas
+env_vars_to_remove = ['STREAMLIT_SERVER_PORT', 'STREAMLIT_SERVER_ADDRESS']
+for var in env_vars_to_remove:
+    os.environ.pop(var, None)
 
-# Configurar las variables de entorno correctas
-os.environ['STREAMLIT_SERVER_PORT'] = port
-os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
-os.environ['STREAMLIT_SERVER_HEADLESS'] = 'true'
-os.environ['STREAMLIT_BROWSER_GATHER_USAGE_STATS'] = 'false'
+# Configurar argumentos de línea de comandos ANTES de importar streamlit
+sys.argv = [
+    'streamlit',
+    'run',
+    'app_streamlit.py',
+    f'--server.port={port}',
+    '--server.address=0.0.0.0',
+    '--server.headless=true',
+    '--browser.gatherUsageStats=false'
+]
 
-# Ejecutar Streamlit
-cmd = ['streamlit', 'run', 'app_streamlit.py']
-sys.exit(subprocess.call(cmd))
+# Importar y ejecutar Streamlit
+from streamlit.web import cli as stcli
+
+if __name__ == '__main__':
+    sys.exit(stcli.main())
