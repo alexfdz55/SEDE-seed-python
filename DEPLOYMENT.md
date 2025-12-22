@@ -17,12 +17,16 @@
    - `requirements.txt` ✓
    - `Procfile` ✓
 
-4. **Variables de entorno** (opcional):
-   - Agregar desde el dashboard de Railway si necesitas
+4. **Configurar variable de entorno PORT:**
+   - En Railway dashboard: Variables → Add Variable
+   - Nombre: `PORT`
+   - Valor: `8501` (o el puerto que Railway asigne automáticamente)
+   - **Importante**: Railway asignará automáticamente el puerto correcto. Si hay error, verifica que Railway haya asignado la variable `PORT`.
 
 5. **Deploy automático:**
    - Railway construirá y desplegará automáticamente
    - Te dará una URL pública: `https://tu-app.railway.app`
+   - Si ves errores de puerto, ve a Settings → Networking y verifica el puerto público
 
 **Costo:** ~$5/mes después de créditos gratuitos
 
