@@ -19,11 +19,10 @@ COPY . .
 # Exponer puerto de Streamlit
 EXPOSE 8501
 
-# Configurar Streamlit para producción
-ENV STREAMLIT_SERVER_PORT=8501
+# Configurar Streamlit para producción (sin STREAMLIT_SERVER_PORT para evitar conflictos)
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
-# Comando para ejecutar la aplicación
-CMD ["streamlit", "run", "app_streamlit.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Comando para ejecutar la aplicación - puerto forzado en CLI
+CMD ["sh", "-c", "unset STREAMLIT_SERVER_PORT && streamlit run app_streamlit.py --server.port=8501 --server.address=0.0.0.0"]
