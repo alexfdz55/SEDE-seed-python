@@ -122,22 +122,33 @@ def validar_calificaciones_anuales(df, nombre_hoja, contexto=None):
             count_invalid_records = len(registros_invalidos)
             percentage = (count_invalid_records / total_records) * 100 if total_records > 0 else 0
             
-            # Obtener asignaturas inválidas únicas
+            # Obtener TODAS las asignaturas inválidas únicas
             asignaturas_invalidas = sorted(registros_invalidos[col_asignatura].unique())
             count_unique = len(asignaturas_invalidas)
             
-            # Mostrar primeras 15
-            display_list = asignaturas_invalidas[:15]
-            
             error_msg = (
                 f"Hay {count_invalid_records} registro(s) ({percentage:.1f}%) con asignaturas inválidas. "
-                f"{count_unique} asignatura(s) única(s) no existen: {', '.join(display_list)}"
+                f"{count_unique} asignatura(s) única(s) no existen:\n"
+                f"{', '.join(asignaturas_invalidas)}"
             )
             
-            if count_unique > 15:
-                error_msg += f" (y {count_unique - 15} más)"
-            
             errores.append(error_msg)
+    
+    # 6. Mostrar todos los tipos únicos de "Promedio anual"
+    if col_promedio in df.columns:
+        tipos_promedio = df[df[col_promedio].notna()][col_promedio].unique()
+        if len(tipos_promedio) > 0:
+            advertencias.append(
+                f"Tipos encontrados en '{col_promedio}': {', '.join(map(str, sorted(tipos_promedio)))}"
+            )
+    
+    # 7. Mostrar todos los tipos únicos de "Aprobó"
+    if col_aprobo in df.columns:
+        tipos_aprobo = df[df[col_aprobo].notna()][col_aprobo].unique()
+        if len(tipos_aprobo) > 0:
+            advertencias.append(
+                f"Valores encontrados en '{col_aprobo}': {', '.join(map(str, sorted(tipos_aprobo)))}"
+            )
     
     return {
         'valido': len(errores) == 0,
