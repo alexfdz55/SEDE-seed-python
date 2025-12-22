@@ -32,10 +32,11 @@
 
 ---
 
-### 2️⃣ Dokploy (Self-Hosted)
+### 2️⃣ Dokploy (Self-Hosted) - ⭐ RECOMENDADO
 
 **Prerrequisitos:**
-- VPS con Ubuntu (DigitalOcean, Hetzner, AWS, etc.)
+- VPS con Ubuntu 20.04+ (DigitalOcean, Hetzner, AWS, Contabo, etc.)
+- Mínimo: 1 GB RAM, 1 vCPU
 - Dokploy instalado: https://dokploy.com/docs/get-started/installation
 
 **Pasos:**
@@ -44,21 +45,63 @@
    ```bash
    curl -sSL https://dokploy.com/install.sh | sh
    ```
+   - El instalador configurará Docker, Traefik y Dokploy automáticamente
+   - Accede al panel: `http://tu-vps-ip:3000`
 
-2. **Acceder al panel de Dokploy:**
-   - http://tu-vps-ip:3000
+2. **Crear nuevo proyecto:**
+   - Click en "Create Project"
+   - Nombre: `validador-excel` (o el que prefieras)
 
-3. **Crear nueva aplicación:**
-   - Type: Docker
-   - Git Repository: Conecta tu repo de GitHub
-   - Build Type: Dockerfile
-   - Port: 8501
+3. **Crear aplicación:**
+   - En el proyecto, click "Create Application"
+   - **Type:** Docker (usa Dockerfile)
+   - **Name:** `streamlit-app`
 
-4. **Deploy:**
-   - Dokploy construirá usando el `Dockerfile`
-   - Configurar dominio con Traefik (incluido)
+4. **Configurar repositorio:**
+   - **Source:** GitHub
+   - **Repository:** Conecta tu repositorio
+   - **Branch:** `main`
+   - **Build Path:** Dejar vacío (usa el Dockerfile en la raíz)
 
-**Costo:** VPS $5-10/mes (la app es gratis)
+5. **Configurar puerto:**
+   - En la sección "Port Configuration":
+   - **Container Port:** `8501`
+   - **Publish Port:** Activar (para acceso público)
+
+6. **Configurar dominio (opcional):**
+   - En "Domains", agrega tu dominio
+   - Dokploy configurará SSL automáticamente con Let's Encrypt
+   - O usa el dominio temporal que Dokploy proporciona
+
+7. **Deploy:**
+   - Click en "Deploy"
+   - Dokploy:
+     - Clonará tu repositorio
+     - Construirá la imagen Docker
+     - Ejecutará el contenedor
+     - Configurará Traefik para routing
+   - Verás los logs en tiempo real
+
+8. **Verificar deployment:**
+   - Una vez completado, accede a tu URL
+   - La app estará disponible en `https://tu-dominio.com` o `http://tu-vps-ip:puerto-asignado`
+
+**Ventajas de Dokploy:**
+- ✅ Control total de tu infraestructura
+- ✅ Sin límites de uso o deployment
+- ✅ SSL automático con Let's Encrypt
+- ✅ Auto-deploy al hacer push a GitHub
+- ✅ Logs y métricas integradas
+- ✅ Backup y rollback fácil
+
+**Costo:** 
+- VPS $4-6/mes (Hetzner, Contabo)
+- Dokploy es gratis y open source
+
+**Troubleshooting:**
+- Si el build falla, revisa los logs en el panel de Dokploy
+- Asegúrate de que el puerto 8501 esté expuesto en el Dockerfile
+- Verifica que el VPS tenga suficiente espacio en disco (mínimo 10 GB)
 
 ---
 
