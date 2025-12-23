@@ -195,7 +195,7 @@ class ExcelToJSONExporter:
                     break
             
             grade_type = str(row.get('Tipo de grado', 'EDUCACION_BASICA_PRIMARIA')).strip()
-            is_cycle_completion = str(row.get('¿Finaliza ciclo?', 'No')).lower() in ['sí', 'si', 'yes', 'true', '1']
+            is_cycle_completion = str(row.get('¿Último grado culminante?', 'No')).lower() in ['sí', 'si', 'yes', 'true', '1']
             
             enriched.append({
                 'level': nivel,
@@ -293,16 +293,29 @@ class ExcelToJSONExporter:
         return asignaturas
     
     def _export_areas(self) -> Dict[str, List[str]]:
-        """Exporta áreas académicas"""
+        """Exporta áreas académicas con sus asignaturas (relación desde hoja Asignaturas)"""
         if 'Áreas' not in self.excel_file.sheet_names:
             return {}
         
-        df = self.excel_file.parse('Áreas', header=1)
+        # Primero leer todas las áreas
+        df_areas = self.excel_file.parse('Áreas', header=1)
         areas = {}
         
-        for _, row in df.iterrows():
-            nombre = str(row.get('Nombre del área', '')).strip()
-            areas[nombre] = []
+        for _, row in df_areas.iterrows():
+            nombre_area = str(row.get('Nombre del área', '')).strip()
+            if nombre_area:
+                areas[nombre_area] = []
+        
+        # Luego leer asignaturas y mapearlas a sus áreas
+        if 'Asignaturas' in self.excel_file.sheet_names:
+            df_asignaturas = self.excel_file.parse('Asignaturas', header=1)
+            
+            for _, row in df_asignaturas.iterrows():
+                nombre_asignatura = str(row.get('Nombre de la asignatura', '')).strip()
+                area_asociada = str(row.get('Área asociada', '')).strip()
+                
+                if area_asociada and area_asociada in areas and nombre_asignatura:
+                    areas[area_asociada].append(nombre_asignatura)
         
         return areas
     
