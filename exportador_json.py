@@ -428,10 +428,10 @@ class ExcelToJSONExporter:
         
         return estudiantes
     
-    def export_calificaciones(self) -> List[Dict[str, Any]]:
-        """Exporta calificaciones anuales a JSON separado (filtrando asignaturas inválidas)"""
+    def export_calificaciones(self) -> Dict[str, Dict[str, Any]]:
+        """Exporta calificaciones anuales agrupadas por estudiante (filtrando asignaturas inválidas)"""
         if 'Calificaciones anuales' not in self.excel_file.sheet_names:
-            return []
+            return {}
         
         df = self.excel_file.parse('Calificaciones anuales', header=1)
         
@@ -442,7 +442,8 @@ class ExcelToJSONExporter:
             if 'Nombre de la asignatura' in df_asignaturas.columns:
                 asignaturas_validas = set(df_asignaturas['Nombre de la asignatura'].dropna().unique())
         
-        calificaciones = []
+        # Agrupar por estudiante (número de documento + año escolar + sede)
+        estudiantes_agrupados = {}
         
         for _, row in df.iterrows():
             asignatura = str(row.get('Nombre de la asignatura', '')).strip()
@@ -458,19 +459,74 @@ class ExcelToJSONExporter:
             else:
                 año_escolar = str(año_escolar).strip()
             
-            calif = {
-                'Numero de documento del estudiante': str(row.get('Número de documento del estudiante', '')),
-                'Nombre del estudiante': str(row.get('Nombre del estudiante', '')).strip(),
-                'Nombre de la asignatura': asignatura,
-                'Año escolar': año_escolar,
-                'Sede asignada': str(row.get('Sede asignada', '')).strip(),
-                'Tipo de nota': str(row.get('Tipo de nota', '')).strip(),
-                'Promedio anual': row.get('Promedio anual'),
-                'Aprobó': str(row.get('Aprobó', '')) if pd.notna(row.get('Aprobó')) else None
-            }
-            calificaciones.append(calif)
+            # Extraer campos
+            num_documento = str(row.get('Número de documento del estudiante', '')).strip()
+            nombre_estudiante = str(row.get('Nombre del estudiante', '')).strip()
+            sede_asignada = str(row.get('Sede asignada', '')).strip()
+            tipo_nota = str(row.get('Tipo de nota', '')).strip()
+            aprobo = str(row.get('Aprobó', '')) if pd.notna(row.get('Aprobó')) else None
+            promedio_anual = row.get('Promedio anual')
+            
+            # Crear clave compuesta si el estudiante tiene múltiples años o sedes
+            # Por ahora usamos solo documento + año escolar + sede para agrupar
+            clave_base = f"{num_documento}_{año_escolar}_{sede_asignada}"
+            
+            # Si el estudiante no existe, crearlo
+            if clave_base not in estudiantes_agrupados:
+                estudiantes_agrupados[clave_base] = {
+                    'numero_documento': num_documento,
+                    'año_escolar': año_escolar,
+                    'sede_asignada': sede_asignada,
+                    'Nombre del estudiante': nombre_estudiante,
+                    'Año escolar': año_escolar,
+                    'Sede asignada': sede_asignada,
+                    'Tipo de nota': tipo_nota,
+                    'Aprobó': aprobo,
+                    'calificaciones': [],
+                    'asignaturas_vistas': {}  # Para evitar duplicados
+                }
+            
+            # Agregar calificación solo si no existe ya esta asignatura
+            # Si existe, actualizar con el último valor (sobrescribir)
+            if asignatura not in estudiantes_agrupados[clave_base]['asignaturas_vistas']:
+                estudiantes_agrupados[clave_base]['calificaciones'].append({
+                    'Nombre de la asignatura': asignatura,
+                    'Promedio anual': promedio_anual
+                })
+                estudiantes_agrupados[clave_base]['asignaturas_vistas'][asignatura] = len(estudiantes_agrupados[clave_base]['calificaciones']) - 1
+            else:
+                # Ya existe, actualizar el valor en su posición
+                idx = estudiantes_agrupados[clave_base]['asignaturas_vistas'][asignatura]
+                estudiantes_agrupados[clave_base]['calificaciones'][idx]['Promedio anual'] = promedio_anual
         
-        return calificaciones
+        # Transformar a estructura final: usar solo documento si hay un solo año/sede por estudiante
+        calificaciones_finales = {}
+        
+        # Agrupar por número de documento para verificar cuántas combinaciones año/sede tiene cada estudiante
+        docs_agrupados = {}
+        for clave, datos in estudiantes_agrupados.items():
+            doc = datos['numero_documento']
+            if doc not in docs_agrupados:
+                docs_agrupados[doc] = []
+            docs_agrupados[doc].append((clave, datos))
+        
+        # Decidir clave final: solo documento o documento_año_sede
+        for doc, entradas in docs_agrupados.items():
+            if len(entradas) == 1:
+                # Un solo año/sede: usar solo el número de documento
+                clave, datos = entradas[0]
+                # Eliminar campos auxiliares
+                datos_finales = {k: v for k, v in datos.items() if k not in ['numero_documento', 'año_escolar', 'sede_asignada', 'asignaturas_vistas']}
+                calificaciones_finales[doc] = datos_finales
+            else:
+                # Múltiples años/sedes: usar clave compuesta
+                for clave, datos in entradas:
+                    clave_final = f"{doc}_{datos['año_escolar']}_{datos['sede_asignada']}"
+                    # Eliminar campos auxiliares
+                    datos_finales = {k: v for k, v in datos.items() if k not in ['numero_documento', 'año_escolar', 'sede_asignada', 'asignaturas_vistas']}
+                    calificaciones_finales[clave_final] = datos_finales
+        
+        return calificaciones_finales
     
     # Métodos auxiliares
     
