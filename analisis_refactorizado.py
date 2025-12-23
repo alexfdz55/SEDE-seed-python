@@ -1,7 +1,9 @@
 import pandas as pd
 from config import HOJAS_REQUERIDAS, COLUMNAS_REQUERIDAS
 from validador_core import construir_contexto, validar_hoja
+from exportador_json import export_excel_to_json
 import warnings
+import sys
 
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
@@ -110,5 +112,20 @@ print(f"Total de advertencias: {total_advertencias}")
 
 if total_errores == 0:
     print("\n✓ El archivo Excel es VÁLIDO")
+    
+    # Preguntar si quiere exportar a JSON
+    if len(sys.argv) > 1 and sys.argv[1] == '--export-json':
+        print("\n" + "=" * 40)
+        print("EXPORTANDO A JSON...")
+        print("=" * 40)
+        try:
+            output_dir = sys.argv[2] if len(sys.argv) > 2 else 'output'
+            archivos = export_excel_to_json(archivo_excel, output_dir)
+            print(f"✓ Archivos JSON generados en '{output_dir}/':")
+            for nombre, ruta in archivos.items():
+                print(f"  - {nombre}: {ruta}")
+        except Exception as e:
+            print(f"✗ Error al exportar JSON: {str(e)}")
 else:
     print(f"\n✗ El archivo Excel tiene {total_errores} error(es) que deben corregirse")
+    print("   Corrige los errores antes de exportar a JSON")

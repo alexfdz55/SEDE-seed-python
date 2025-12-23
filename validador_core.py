@@ -37,7 +37,9 @@ def construir_contexto(excel_file, archivo_excel):
         df_cursos = pd.read_excel(archivo_excel, sheet_name="Cursos académicos", header=1)
         col_nombre_curso = COLUMNAS_REQUERIDAS["Cursos académicos"][0]
         if col_nombre_curso in df_cursos.columns:
-            contexto['cursos_academicos'] = df_cursos[df_cursos[col_nombre_curso].notna()][col_nombre_curso].unique().tolist()
+            # Convertir a string para manejar tanto enteros como strings
+            contexto['cursos_academicos'] = [str(int(c)) if isinstance(c, (int, float)) and not pd.isna(c) else str(c) 
+                                             for c in df_cursos[df_cursos[col_nombre_curso].notna()][col_nombre_curso].unique().tolist()]
     
     # Grados
     if "Grados" in excel_file.sheet_names:

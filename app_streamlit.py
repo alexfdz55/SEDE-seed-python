@@ -4,8 +4,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from io import BytesIO
 import warnings
+import json
+import zipfile
 from config import HOJAS_REQUERIDAS, COLUMNAS_REQUERIDAS
 from validador_core import construir_contexto, validar_hoja
+from exportador_json import ExcelToJSONExporter
 
 # Configuración de página
 st.set_page_config(
@@ -382,4 +385,41 @@ DETALLES POR HOJA:
             )
         
         with col_btn3:
-            st.info("💡 Los reportes contienen el resumen completo de la validación")
+            # Exportar a JSON
+            if resultados['total_errores'] == 0:
+                try:
+                    # Crear exportador
+                    excel_file = pd.ExcelFile(archivo_cargado)
+                    exporter = ExcelToJSONExporter(excel_file)
+                    data = exporter.export_all()
+                    
+                    # Crear ZIP con todos los JSONs
+                    zip_buffer = BytesIO()
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                        # Agregar config.json
+                        zip_file.writestr('config.json', 
+                                        json.dumps(data['config'], ensure_ascii=False, indent=2))
+                        # Agregar profesores.json
+                        zip_file.writestr('profesores.json', 
+                                        json.dumps(data['profesores'], ensure_ascii=False, indent=2))
+                        # Agregar estudiantes.json
+                        zip_file.writestr('estudiantes.json', 
+                                        json.dumps(data['estudiantes'], ensure_ascii=False, indent=2))
+                        # Agregar calificaciones_anuales.json
+                        zip_file.writestr('calificaciones_anuales.json', 
+                                        json.dumps(data['calificaciones_anuales'], ensure_ascii=False, indent=2))
+                    
+                    zip_buffer.seek(0)
+                    
+                    st.download_button(
+                        label="📦 Exportar a JSON",
+                        data=zip_buffer.getvalue(),
+                        file_name="seed_data.zip",
+                        mime="application/zip",
+                        help="Descarga 4 archivos JSON: config, profesores, estudiantes y calificaciones"
+                    )
+                except Exception as e:
+                    st.error(f"Error al exportar JSON: {str(e)}")
+            else:
+                st.warning("⚠️ Corrige los errores antes de exportar")
+

@@ -43,7 +43,8 @@ def validar_calificaciones_anuales(df, nombre_hoja, contexto=None):
         
         for _, row in df.iterrows():
             if pd.notna(row[col_año_escolar]):
-                año = str(row[col_año_escolar]).strip()
+                # Convertir a string sin decimales si es número
+                año = str(int(row[col_año_escolar])) if isinstance(row[col_año_escolar], (int, float)) else str(row[col_año_escolar]).strip()
                 if año and año not in cursos_validos:
                     años_invalidos.add(año)
         
@@ -109,7 +110,7 @@ def validar_calificaciones_anuales(df, nombre_hoja, contexto=None):
             except Exception as e:
                 advertencias.append(f"No se pudieron validar completamente los promedios: {str(e)}")
     
-    # 5. Validar asignatura con reporte estadístico detallado
+    # 5. Validar asignatura con reporte estadístico detallado (solo advertencia)
     if contexto and 'asignaturas' in contexto and col_asignatura in df.columns:
         asignaturas_validas = contexto['asignaturas']
         
@@ -126,13 +127,13 @@ def validar_calificaciones_anuales(df, nombre_hoja, contexto=None):
             asignaturas_invalidas = sorted(registros_invalidos[col_asignatura].unique())
             count_unique = len(asignaturas_invalidas)
             
-            error_msg = (
-                f"Hay {count_invalid_records} registro(s) ({percentage:.1f}%) con asignaturas inválidas. "
-                f"{count_unique} asignatura(s) única(s) no existen:\n"
-                f"{', '.join(asignaturas_invalidas)}"
+            warning_msg = (
+                f"⚠️ Hay {count_invalid_records} registro(s) ({percentage:.1f}%) con asignaturas inválidas. "
+                f"{count_unique} asignatura(s) única(s) no existen: {', '.join(asignaturas_invalidas)}. "
+                f"Estos registros serán omitidos en la exportación."
             )
             
-            errores.append(error_msg)
+            advertencias.append(warning_msg)
     
     # 6. Mostrar todos los tipos únicos de "Promedio anual"
     if col_promedio in df.columns:
