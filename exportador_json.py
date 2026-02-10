@@ -237,7 +237,8 @@ class ExcelToJSONExporter:
         if 'Grupos' not in self.excel_file.sheet_names:
             return {}
         
-        df = self.excel_file.parse('Grupos', header=1)
+        # Forzar lectura como texto para preservar nombres de grupo (ej. '6-1')
+        df = self.excel_file.parse('Grupos', header=1, dtype=str).fillna('')
         grades_por_sede = {}
         
         for _, row in df.iterrows():
@@ -258,7 +259,8 @@ class ExcelToJSONExporter:
         if 'Grupos' not in self.excel_file.sheet_names:
             return {}
         
-        df_grupos = self.excel_file.parse('Grupos', header=1)
+        # Forzar lectura como texto para preservar nombres de grupo (ej. '6-1')
+        df_grupos = self.excel_file.parse('Grupos', header=1, dtype=str).fillna('')
         
         # Crear mapeo nombre_grado -> nivel desde la hoja Grados
         nombre_a_nivel = self._build_grade_name_to_level_map()
@@ -268,6 +270,7 @@ class ExcelToJSONExporter:
         for _, row in df_grupos.iterrows():
             sede = str(row.get('Sedes asociadas', '')).strip()
             nombre_grado = str(row.get('Nombre del grado', '')).strip()
+            # Forzar conversión a string (puede venir como int desde Excel)
             nombre_grupo = str(row.get('Nombre del grupo', '')).strip()
             
             # Buscar nivel en el mapeo
@@ -287,7 +290,8 @@ class ExcelToJSONExporter:
             if nivel not in grupos_por_sede[sede]:
                 grupos_por_sede[sede][nivel] = []
             
-            grupos_por_sede[sede][nivel].append(nombre_grupo)
+            # Asegurar que es string antes de agregar
+            grupos_por_sede[sede][nivel].append(str(nombre_grupo))
         
         return grupos_por_sede
     

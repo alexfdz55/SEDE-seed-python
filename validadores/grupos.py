@@ -36,12 +36,22 @@ def validar_grupos(df, nombre_hoja, contexto=None):
     if len(df) == 0:
         errores.append("Debe haber al menos un grupo registrado")
     
-    # Validar que no haya nombres de grupo duplicados
-    if col_nombre in df.columns:
-        duplicados = df[df[col_nombre].duplicated(keep=False) & df[col_nombre].notna()]
-        if len(duplicados) > 0:
-            nombres_dup = duplicados[col_nombre].unique()
-            errores.append(f"Hay {len(duplicados)} nombre(s) de grupo duplicado(s): {', '.join(nombres_dup)}")
+    # Validar que no haya nombres de grupo duplicados POR SEDE
+    # (los mismos nombres pueden repetirse en sedes diferentes)
+    if col_nombre in df.columns and col_sedes in df.columns:
+        duplicados_por_sede = []
+        
+        # Agrupar por sede y buscar duplicados dentro de cada sede
+        for sede, grupo_sede in df.groupby(col_sedes):
+            duplicados_sede = grupo_sede[grupo_sede[col_nombre].duplicated(keep=False) & grupo_sede[col_nombre].notna()]
+            if len(duplicados_sede) > 0:
+                nombres_dup = duplicados_sede[col_nombre].unique()
+                nombres_dup_str = [str(x) for x in nombres_dup]
+                duplicados_por_sede.append(f"En la sede '{sede}': {', '.join(nombres_dup_str)}")
+        
+        if duplicados_por_sede:
+            for msg in duplicados_por_sede:
+                errores.append(f"Nombres de grupo duplicados en la misma sede: {msg}")
     
     # Validar que los grados asociados existan en la hoja Grados
     if contexto and 'grados' in contexto and col_grado in df.columns:
@@ -50,7 +60,9 @@ def validar_grupos(df, nombre_hoja, contexto=None):
         grados_invalidos = [grado for grado in grados_asignados if grado not in grados_validos]
         
         if grados_invalidos:
-            errores.append(f"Hay {len(grados_invalidos)} grado(s) asignado(s) que no existen: {', '.join(grados_invalidos)}")
+            # Convertir a strings por si contienen int64 de Pandas/Excel
+            grados_invalidos_str = [str(x) for x in grados_invalidos]
+            errores.append(f"Hay {len(grados_invalidos)} grado(s) asignado(s) que no existen: {', '.join(grados_invalidos_str)}")
     
     # Validar que las sedes asociadas (separadas por coma) existan en la hoja Sedes
     if contexto and 'sedes' in contexto and col_sedes in df.columns:
