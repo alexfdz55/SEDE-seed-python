@@ -385,9 +385,14 @@ DETALLES POR HOJA:
             )
         
         with col_btn3:
+            # Opción para forzar exportación aun con errores
+            force_export = st.checkbox("Forzar exportación (ignorar errores)", value=False)
+
             # Exportar a JSON
-            if resultados['total_errores'] == 0:
+            if resultados['total_errores'] == 0 or force_export:
                 try:
+                    if resultados['total_errores'] > 0 and force_export:
+                        st.info("🔔 Exportando aún con errores: revisa las advertencias y el resultado antes de usarlo en producción.")
                     # Crear exportador
                     excel_file = pd.ExcelFile(archivo_cargado)
                     exporter = ExcelToJSONExporter(excel_file)

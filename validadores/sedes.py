@@ -55,14 +55,20 @@ def validar_sedes(df, nombre_hoja):
         duplicados = df[df[col_telefono].duplicated(keep=False) & df[col_telefono].notna()]
         if len(duplicados) > 0:
             telefonos_dup = duplicados[col_telefono].unique()
-            errores.append(f"Hay {len(duplicados)} teléfono(s) duplicado(s): {', '.join(map(str, telefonos_dup))}")
+            # No es un error bloqueante: los teléfonos pueden repetirse entre sedes
+            advertencias.append(
+                f"⚠️ Hay {len(duplicados)} teléfono(s) duplicado(s): {', '.join(map(str, telefonos_dup))}"
+            )
     
     # Validar que no haya correos duplicados
     if col_correo in df.columns:
         duplicados = df[df[col_correo].duplicated(keep=False) & df[col_correo].notna()]
         if len(duplicados) > 0:
             correos_dup = duplicados[col_correo].unique()
-            errores.append(f"Hay {len(duplicados)} correo(s) electrónico(s) duplicado(s): {', '.join(correos_dup)}")
+            # No es un error bloqueante: los correos pueden repetirse entre sedes
+            advertencias.append(
+                f"⚠️ Hay {len(duplicados)} correo(s) electrónico(s) duplicado(s): {', '.join(correos_dup)}"
+            )
     
     # Validar que no haya códigos Dane duplicados
     if col_dane in df.columns:

@@ -36,12 +36,25 @@ def validar_periodos(df, nombre_hoja, contexto=None):
     if len(df) == 0:
         errores.append("Debe haber al menos un periodo registrado")
     
-    # Validar que no haya nombres de periodo duplicados
+    # Validar que no haya nombres de periodo duplicados dentro del mismo curso
     if col_nombre in df.columns:
-        duplicados = df[df[col_nombre].duplicated(keep=False) & df[col_nombre].notna()]
-        if len(duplicados) > 0:
-            nombres_dup = duplicados[col_nombre].unique()
-            errores.append(f"Hay {len(duplicados)} nombre(s) de periodo duplicado(s): {', '.join(nombres_dup)}")
+        if col_curso in df.columns:
+            # Considerar duplicados sólo cuando nombre y curso coinciden
+            mask = df[col_nombre].notna() & df[col_curso].notna()
+            df_valid = df[mask]
+            duplicados = df_valid[df_valid.duplicated(subset=[col_curso, col_nombre], keep=False)]
+            if len(duplicados) > 0:
+                combos = duplicados[[col_nombre, col_curso]].drop_duplicates()
+                combos_list = [f"{r[col_nombre]} ({r[col_curso]})" for _, r in combos.iterrows()]
+                errores.append(
+                    f"Hay {len(duplicados)} periodo(s) duplicado(s) dentro del mismo curso: {', '.join(combos_list)}"
+                )
+        else:
+            # Sin columna de curso, usar comportamiento anterior (global)
+            duplicados = df[df[col_nombre].duplicated(keep=False) & df[col_nombre].notna()]
+            if len(duplicados) > 0:
+                nombres_dup = duplicados[col_nombre].unique()
+                errores.append(f"Hay {len(duplicados)} nombre(s) de periodo duplicado(s): {', '.join(nombres_dup)}")
     
     # Validar que las fechas sean válidas
     if col_fecha_inicio in df.columns and col_fecha_fin in df.columns:
