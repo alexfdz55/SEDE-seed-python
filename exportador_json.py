@@ -47,29 +47,55 @@ class ExcelToJSONExporter:
         return config
     
     def _export_sede_principal(self) -> Dict[str, Any]:
-        """Exporta datos de la sede principal"""
+        """Exporta datos de la sede principal desde estructura transpuesta"""
         if 'Sede principal' not in self.excel_file.sheet_names:
             return self._get_default_school()
         
-        df = self.excel_file.parse('Sede principal', header=1)
+        # Leer sin header para acceder a todos los datos
+        df = self.excel_file.parse('Sede principal', header=None)
         if df.empty:
             return self._get_default_school()
         
-        row = df.iloc[0]
+        # La estructura es transpuesta: primera columna tiene etiquetas, segunda tiene valores
+        # Crear diccionario donde clave es la etiqueta y valor es el dato
+        data = {}
+        for idx, row in df.iterrows():
+            try:
+                # Saltar filas que son headers o vacías
+                etiqueta = row.iloc[0]
+                if pd.isna(etiqueta):
+                    continue
+                
+                etiqueta_str = str(etiqueta).strip()
+                
+                # Saltar la fila de "SEDE PRINCIPAL" (titulo)
+                if etiqueta_str.upper() == 'SEDE PRINCIPAL':
+                    continue
+                
+                valor = row.iloc[1] if len(row) > 1 else None  # Segunda columna = valor
+                
+                # Convertir NaN a string vacío, mantener otros valores como strings
+                valor_str = '' if pd.isna(valor) else str(valor).strip()
+                data[etiqueta_str] = valor_str
+            except (IndexError, TypeError):
+                continue
+        
+        # Mapeo flexible de etiquetas a campos del modelo
         return {
-            'name': str(row.get('Nombre de la institución', '')).strip(),
-            'department': str(row.get('Departamento', '')).strip(),
-            'municipality': str(row.get('Municipio', '')).strip(),
-            'daneCode': str(row.get('Código Dane', '')).strip(),
-            'nit': str(row.get('NIT', '')).strip(),
-            'phone': str(row.get('Teléfono', '')) if pd.notna(row.get('Teléfono')) else None,
-            'email': str(row.get('Correo electrónico', '')) if pd.notna(row.get('Correo electrónico')) else None,
+            'name': data.get('Nombre de la institución', data.get('Nombre', '')),
+            'department': data.get('Departamento', ''),
+            'municipality': data.get('Municipio', ''),
+            'daneCode': data.get('Código DANE', data.get('Código Dane', data.get('DANE', ''))),
+            'nit': data.get('NIT', data.get('Nit', '')),
+            'phone': data.get('Teléfono', data.get('Telefono', '')) or None,
+            'email': data.get('Correo electrónico', data.get('Correo', '')) or None,
+            'address': data.get('Dirección', data.get('Direccion', '')),
             'logoImg': None,
             'shieldImg': None,
             'principalSign': None,
             'website': None,
-            'mission': str(row.get('Misión', '')).strip() if pd.notna(row.get('Misión')) else '',
-            'vision': str(row.get('Visión', '')).strip() if pd.notna(row.get('Visión')) else '',
+            'mission': data.get('Misión', data.get('Mision', '')),
+            'vision': data.get('Visión', data.get('Vision', '')),
             'isActive': True
         }
     

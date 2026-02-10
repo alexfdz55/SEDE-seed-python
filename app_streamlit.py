@@ -111,8 +111,8 @@ def validar_excel(archivo_excel):
             df = pd.read_excel(excel_file, sheet_name=hoja, header=1)
             resultado_hoja['num_filas'] = len(df)
             
-            # Validar estructura (columnas)
-            if hoja in COLUMNAS_REQUERIDAS:
+            # Validar estructura (columnas) - excepto Sede principal que tiene estructura transpuesta
+            if hoja in COLUMNAS_REQUERIDAS and hoja != "Sede principal":
                 columnas_requeridas = COLUMNAS_REQUERIDAS[hoja]
                 columnas_presentes = df.columns.tolist()
                 
@@ -120,6 +120,9 @@ def validar_excel(archivo_excel):
                     resultado_hoja['estructura_valida'] = True
                 else:
                     resultado_hoja['errores'].append("Estructura de columnas incorrecta")
+            elif hoja == "Sede principal":
+                # Sede principal tiene estructura transpuesta, solo validar que existe
+                resultado_hoja['estructura_valida'] = True
             
             # Validar contenido
             validacion = validar_hoja(hoja, df, contexto)
